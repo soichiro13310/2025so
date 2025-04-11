@@ -1,1 +1,121 @@
-rino
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>医療ドキュメント作成アプリ</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      margin: 0;
+    }
+    header {
+      background: #2e6da4;
+      color: white;
+      padding: 10px;
+      text-align: center;
+    }
+    main {
+      display: flex;
+      flex: 1;
+    }
+    section {
+      padding: 10px;
+      overflow-y: auto;
+    }
+    #transcription {
+      width: 40%;
+      border-right: 2px solid #ccc;
+    }
+    #info-fields {
+      width: 60%;
+    }
+    textarea, input {
+      width: 100%;
+      margin: 5px 0;
+      padding: 5px;
+      box-sizing: border-box;
+    }
+    button {
+      margin-top: 10px;
+      padding: 10px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>医療ドキュメント作成アプリ</h1>
+  </header>
+  <main>
+    <!-- A: 音声文字起こし画面 -->
+    <section id="transcription">
+      <h2>リアルタイム文字起こし</h2>
+      <div id="output" style="min-height: 200px; border: 1px solid #ccc; padding: 10px;"></div>
+      <button onclick="startRecording()">🎤 録音開始</button>
+      <button onclick="stopRecording()">⏹ 録音停止</button>
+    </section>
+
+    <!-- B: 情報入力欄 -->
+    <section id="info-fields">
+      <h2>ドキュメント情報</h2>
+      <input id="doc-title" placeholder="ドキュメントタイトルを入力">
+      <textarea id="basic-info" placeholder="基本情報（診察券等）"></textarea>
+      <textarea id="symptoms" placeholder="症状"></textarea>
+      <textarea id="exams" placeholder="検査結果"></textarea>
+      <textarea id="treatment" placeholder="治療方針"></textarea>
+      <textarea id="progress" placeholder="経過記録"></textarea>
+      <textarea id="medication" placeholder="薬"></textarea>
+      <button onclick="saveDocument()">💾 保存</button>
+    </section>
+  </main>
+
+  <script>
+    // 音声認識処理（簡易：Web Speech API使用）
+    let recognition;
+    function startRecording() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        alert("このブラウザは音声認識に対応していません。");
+        return;
+      }
+      recognition = new SpeechRecognition();
+      recognition.lang = 'ja-JP';
+      recognition.continuous = true;
+
+      recognition.onresult = (event) => {
+        let transcript = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          transcript += event.results[i][0].transcript;
+        }
+        document.getElementById('output').innerText += transcript + '\n';
+        // TODO: NLPで各セクションに分類（次ステップで）
+      };
+
+      recognition.start();
+    }
+
+    function stopRecording() {
+      if (recognition) {
+        recognition.stop();
+      }
+    }
+
+    function saveDocument() {
+      const doc = {
+        title: document.getElementById('doc-title').value,
+        basicInfo: document.getElementById('basic-info').value,
+        symptoms: document.getElementById('symptoms').value,
+        exams: document.getElementById('exams').value,
+        treatment: document.getElementById('treatment').value,
+        progress: document.getElementById('progress').value,
+        medication: document.getElementById('medication').value,
+        timestamp: new Date().toISOString()
+      };
+      localStorage.setItem(`doc-${doc.title}`, JSON.stringify(doc));
+      alert("ドキュメントを保存しました。");
+    }
+  </script>
+</body>
+</html>
